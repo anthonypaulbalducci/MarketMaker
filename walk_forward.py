@@ -49,28 +49,38 @@ def fit_one_fold(
     seed: int,
     trial=None,
     fold_idx: int = 0,
+    select_by: str = "loss",
 ) -> dict:
     """Train one fold and report metrics.
 
     test_feat / test_tgt may be None during hyperparameter tuning, in which
     case the test loader is skipped and only val metrics are returned.
+
+    select_by: "loss" picks the epoch with min val MSE (default, used by
+    walk-forward training). "rank_corr" picks the epoch with max val rank
+    correlation and uses it for early stopping — used by the tuner so the
+    Optuna objective reflects rank corr end-to-end.
     """
+    if select_by not in ("loss", "rank_corr"):
+        raise ValueError(f"select_by must be 'loss' or 'rank_corr', got {select_by!r}")
     torch.manual_seed(seed)
     np.random.seed(seed)
 
     train_ds = SectorRotationDataset(train_feat, train_tgt, lookback)
     val_ds = SectorRotationDataset(val_feat, val_tgt, lookback)
 
+    # num_workers=0: small in-memory dataset; on macOS DataLoader workers
+    # deadlock with MPS, and worker startup dominates wall time anyway.
     train_ld = DataLoader(train_ds, batch_size=cfg.train.batch_size,
-                          shuffle=True, num_workers=2, pin_memory=True, drop_last=True)
+                          shuffle=True, num_workers=0, drop_last=True)
     val_ld = DataLoader(val_ds, batch_size=cfg.train.batch_size,
-                        shuffle=False, num_workers=2, pin_memory=True)
+                        shuffle=False, num_workers=0)
 
     test_ld = None
     if test_feat is not None and test_tgt is not None:
         test_ds = SectorRotationDataset(test_feat, test_tgt, lookback)
         test_ld = DataLoader(test_ds, batch_size=cfg.train.batch_size,
-                             shuffle=False, num_workers=2, pin_memory=True)
+                             shuffle=False, num_workers=0)
 
     model = build_model(cfg, spy_index=spy_index, n_sectors=n_sectors)
     model = model.to(device)
@@ -93,12 +103,21 @@ def fit_one_fold(
                         loss_fn, device, cfg.train.max_grad_norm, 0)
         val_m = evaluate(model, val_ld, loss_fn, device)
 
-        if val_m["loss"] < best_val_loss:
+        if select_by == "rank_corr":
+            improved = val_m["rank_corr"] > best_val_rank_corr
+            # EarlyStopping minimizes — feed it negative rank_corr so a rising
+            # rank corr counts as improvement.
+            es_signal = -val_m["rank_corr"]
+        else:
+            improved = val_m["loss"] < best_val_loss
+            es_signal = val_m["loss"]
+
+        if improved:
             best_val_loss = val_m["loss"]
             best_val_rank_corr = val_m["rank_corr"]
             best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
 
-        if early_stopping(val_m["loss"]):
+        if early_stopping(es_signal):
             break
 
     if best_state is not None:

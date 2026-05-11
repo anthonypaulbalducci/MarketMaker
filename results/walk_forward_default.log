@@ -1,0 +1,58 @@
+Baseline (default) params:
+  d_model=64, n_heads=4, lstm_layers=2
+  dropout=0.1, lookback_len=12
+  lr=0.001, wd=0.0001, bs=32, warmup=5
+
+Device: mps
+Dataset: 811 weeks, 12 variates, 10 features, 11 sectors
+Walk-forward: 400w train, 52w val, 52w test
+Seeds per fold: 1
+Total folds: 6
+
+============================================================
+FOLD 1/6  Train: 2018-06-25 00:00:00–2022-04-22 00:00:00  Test: 2022-10-24 00:00:00–2023-04-21 00:00:00
+Model parameters: 199,539
+  Fold 1: Sharpe=0.43 RankCorr=0.0730 WinRate=55% (12s)
+
+============================================================
+FOLD 2/6  Train: 2018-12-24 00:00:00–2022-10-21 00:00:00  Test: 2023-04-24 00:00:00–2023-10-20 00:00:00
+Model parameters: 199,539
+  Fold 2: Sharpe=1.31 RankCorr=0.1316 WinRate=57% (9s)
+
+============================================================
+FOLD 3/6  Train: 2019-06-24 00:00:00–2023-04-21 00:00:00  Test: 2023-10-23 00:00:00–2024-04-19 00:00:00
+Model parameters: 199,539
+  Fold 3: Sharpe=0.65 RankCorr=0.0560 WinRate=52% (11s)
+
+============================================================
+FOLD 4/6  Train: 2019-12-23 00:00:00–2023-10-20 00:00:00  Test: 2024-04-22 00:00:00–2024-10-18 00:00:00
+Model parameters: 199,539
+  Fold 4: Sharpe=-0.28 RankCorr=-0.0519 WinRate=57% (9s)
+
+============================================================
+FOLD 5/6  Train: 2020-06-22 00:00:00–2024-04-19 00:00:00  Test: 2024-10-21 00:00:00–2025-04-18 00:00:00
+Model parameters: 199,539
+  Fold 5: Sharpe=1.77 RankCorr=0.0538 WinRate=57% (10s)
+
+============================================================
+FOLD 6/6  Train: 2020-12-21 00:00:00–2024-10-18 00:00:00  Test: 2025-04-21 00:00:00–2025-10-17 00:00:00
+Model parameters: 199,539
+  Fold 6: Sharpe=0.53 RankCorr=-0.0098 WinRate=55% (8s)
+
+============================================================
+WALK-FORWARD RESULTS (6 folds, 240 test weeks)
+============================================================
+Sharpe:     0.73
+Win rate:   56%
+Total return: 28.5%
+
+Per-fold:
+  Fold  1: Sharpe=+0.43  RankCorr=0.073  WinRate=55%  (2022-10-24 00:00:00 to 2023-04-21 00:00:00)
+  Fold  2: Sharpe=+1.31  RankCorr=0.132  WinRate=57%  (2023-04-24 00:00:00 to 2023-10-20 00:00:00)
+  Fold  3: Sharpe=+0.65  RankCorr=0.056  WinRate=52%  (2023-10-23 00:00:00 to 2024-04-19 00:00:00)
+  Fold  4: Sharpe=-0.28  RankCorr=-0.052  WinRate=57%  (2024-04-22 00:00:00 to 2024-10-18 00:00:00)
+  Fold  5: Sharpe=+1.77  RankCorr=0.054  WinRate=57%  (2024-10-21 00:00:00 to 2025-04-18 00:00:00)
+  Fold  6: Sharpe=+0.53  RankCorr=-0.010  WinRate=55%  (2025-04-21 00:00:00 to 2025-10-17 00:00:00)
+Saved walk_forward_results.png and cumulative_returns.png
+
+Results saved to results/

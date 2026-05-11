@@ -1,0 +1,182 @@
+Device: mps
+
+Architecture:
+  d_model       ∈ {32, 64, 128}
+  n_heads       ∈ {2, 4, 8}            (constrained: d_model % n_heads == 0)
+  lstm_layers   ∈ {1, 2, 3}
+  dropout       ∈ [0.0, 0.4]
+  lookback_len  ∈ {8, 12, 16, 24}
+Optimization:
+  learning_rate ∈ [1e-5, 1e-2]  (log)
+  weight_decay  ∈ [1e-6, 1e-2]  (log)
+  batch_size    ∈ {16, 32, 64}
+  warmup_epochs ∈ {0, 3, 5, 10}
+
+Tuning on 4 fold(s); 30 epochs each
+  Fold 1: train 2020-09-21 00:00:00–2024-07-19 00:00:00  val 2024-07-22 00:00:00–2025-01-17 00:00:00
+  Fold 2: train 2020-12-21 00:00:00–2024-10-18 00:00:00  val 2024-10-21 00:00:00–2025-04-18 00:00:00
+  Fold 3: train 2021-03-22 00:00:00–2025-01-17 00:00:00  val 2025-01-20 00:00:00–2025-07-18 00:00:00
+  Fold 4: train 2021-06-21 00:00:00–2025-04-18 00:00:00  val 2025-04-21 00:00:00–2025-10-17 00:00:00
+[I 2026-05-11 14:09:50,059] A new study created in RDB with name: sector_rotation
+Model parameters: 199,539
+Model parameters: 199,539
+Model parameters: 199,539
+Model parameters: 199,539
+[I 2026-05-11 14:10:05,479] Trial 0 finished with value: 0.02073425059117314 and parameters: {'d_model': 64, 'n_heads': 2, 'lstm_layers': 2, 'dropout': 0.2832290311184182, 'lookback_len': 12, 'learning_rate': 3.511356313970405e-05, 'weight_decay': 5.415244119402541e-06, 'batch_size': 32, 'warmup_epochs': 3}. Best is trial 0 with value: 0.02073425059117314.
+Model parameters: 767,347
+Model parameters: 767,347
+Model parameters: 767,347
+Model parameters: 767,347
+[I 2026-05-11 14:10:10,861] Trial 1 finished with value: 0.014215931769217835 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 2, 'dropout': 0.02602063719411181, 'lookback_len': 12, 'learning_rate': 1.9634341572933338e-05, 'weight_decay': 0.0005456725485601478, 'batch_size': 64, 'warmup_epochs': 3}. Best is trial 0 with value: 0.02073425059117314.
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+[I 2026-05-11 14:10:30,170] Trial 2 finished with value: 0.0720794447819905 and parameters: {'d_model': 128, 'n_heads': 4, 'lstm_layers': 1, 'dropout': 0.36874969400924673, 'lookback_len': 24, 'learning_rate': 0.00014656553886225324, 'weight_decay': 1.2172958098369962e-05, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 2 with value: 0.0720794447819905.
+Model parameters: 53,875
+Model parameters: 53,875
+Model parameters: 53,875
+Model parameters: 53,875
+[I 2026-05-11 14:10:43,668] Trial 3 finished with value: 0.01706233606506533 and parameters: {'d_model': 32, 'n_heads': 4, 'lstm_layers': 2, 'dropout': 0.14338629141770906, 'lookback_len': 12, 'learning_rate': 1.551225912648474e-05, 'weight_decay': 1.753594952976443e-05, 'batch_size': 32, 'warmup_epochs': 0}. Best is trial 2 with value: 0.0720794447819905.
+Model parameters: 767,859
+Model parameters: 767,859
+Model parameters: 767,859
+Model parameters: 767,859
+[I 2026-05-11 14:10:50,329] Trial 4 finished with value: 0.05524675993984478 and parameters: {'d_model': 128, 'n_heads': 4, 'lstm_layers': 2, 'dropout': 0.25456416450551217, 'lookback_len': 16, 'learning_rate': 0.00017027416886764422, 'weight_decay': 0.001052457468133564, 'batch_size': 64, 'warmup_epochs': 3}. Best is trial 2 with value: 0.0720794447819905.
+Model parameters: 45,555
+Model parameters: 45,555
+[I 2026-05-11 14:10:54,619] Trial 5 pruned. 
+Model parameters: 233,075
+Model parameters: 233,075
+[I 2026-05-11 14:11:08,007] Trial 6 pruned. 
+Model parameters: 233,587
+Model parameters: 233,587
+[I 2026-05-11 14:11:12,403] Trial 7 pruned. 
+Model parameters: 900,979
+Model parameters: 900,979
+Model parameters: 900,979
+Model parameters: 900,979
+[I 2026-05-11 14:11:28,380] Trial 8 finished with value: 0.0905520190776964 and parameters: {'d_model': 128, 'n_heads': 2, 'lstm_layers': 3, 'dropout': 0.2532405829093072, 'lookback_len': 24, 'learning_rate': 0.004584154780136381, 'weight_decay': 0.0013167465326936148, 'batch_size': 16, 'warmup_epochs': 0}. Best is trial 8 with value: 0.0905520190776964.
+Model parameters: 54,003
+Model parameters: 54,003
+[I 2026-05-11 14:11:42,360] Trial 9 pruned. 
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+[I 2026-05-11 14:12:02,197] Trial 10 finished with value: 0.046326238728739956 and parameters: {'d_model': 128, 'n_heads': 2, 'lstm_layers': 3, 'dropout': 0.372916136764715, 'lookback_len': 8, 'learning_rate': 0.005284384205738863, 'weight_decay': 0.007349357402549833, 'batch_size': 16, 'warmup_epochs': 10}. Best is trial 8 with value: 0.0905520190776964.
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+[I 2026-05-11 14:12:15,881] Trial 11 finished with value: 0.09410580005631965 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 1, 'dropout': 0.3774520178711339, 'lookback_len': 24, 'learning_rate': 0.007456991301085365, 'weight_decay': 0.005529403787417128, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 11 with value: 0.09410580005631965.
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+[I 2026-05-11 14:12:27,881] Trial 12 finished with value: 0.08672666033623441 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 1, 'dropout': 0.3988933720035762, 'lookback_len': 24, 'learning_rate': 0.007208292686904722, 'weight_decay': 0.009096895658746827, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 11 with value: 0.09410580005631965.
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+Model parameters: 636,787
+[I 2026-05-11 14:12:40,025] Trial 13 finished with value: 0.08126454968032773 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 1, 'dropout': 0.31996902012068473, 'lookback_len': 24, 'learning_rate': 0.001990330010993141, 'weight_decay': 0.001912371242901499, 'batch_size': 16, 'warmup_epochs': 10}. Best is trial 11 with value: 0.09410580005631965.
+Model parameters: 900,979
+Model parameters: 900,979
+Model parameters: 900,979
+Model parameters: 900,979
+[I 2026-05-11 14:13:05,787] Trial 14 finished with value: 0.14887450385401546 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.20794436172851677, 'lookback_len': 24, 'learning_rate': 0.0017982094450136338, 'weight_decay': 0.00257913314066865, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+[I 2026-05-11 14:13:26,248] Trial 15 finished with value: 0.09719590272367645 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.18978973609190988, 'lookback_len': 8, 'learning_rate': 0.0014510712144860393, 'weight_decay': 0.003153819241586393, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+[I 2026-05-11 14:13:50,104] Trial 16 finished with value: 0.1035091551315046 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.19431313469330028, 'lookback_len': 8, 'learning_rate': 0.0011646750951980393, 'weight_decay': 0.00028908238983188056, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+[I 2026-05-11 14:14:10,578] Trial 17 finished with value: 0.10787364004038126 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.20120268387224885, 'lookback_len': 8, 'learning_rate': 0.0011128995604229386, 'weight_decay': 0.00021423016092887094, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 62,195
+Model parameters: 62,195
+[I 2026-05-11 14:14:13,841] Trial 18 pruned. 
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+[I 2026-05-11 14:14:26,456] Trial 19 finished with value: 0.10508885484705698 and parameters: {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.1634387096612511, 'lookback_len': 8, 'learning_rate': 0.002765541370542151, 'weight_decay': 5.563415898894552e-05, 'batch_size': 32, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+Model parameters: 898,931
+[I 2026-05-11 14:14:46,107] Trial 20 finished with value: 0.09304941674295569 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.22502092857087494, 'lookback_len': 8, 'learning_rate': 0.000830859741080672, 'weight_decay': 0.00016120047632684907, 'batch_size': 16, 'warmup_epochs': 10}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+[I 2026-05-11 14:15:00,043] Trial 21 finished with value: 0.11394064118587859 and parameters: {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.15450803479732803, 'lookback_len': 8, 'learning_rate': 0.002848371505178922, 'weight_decay': 4.143030772783375e-05, 'batch_size': 32, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+[I 2026-05-11 14:15:09,571] Trial 22 finished with value: 0.07370981126756879 and parameters: {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.09995935005647458, 'lookback_len': 8, 'learning_rate': 0.0035730545867636437, 'weight_decay': 2.2664088884007703e-05, 'batch_size': 32, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 232,563
+Model parameters: 232,563
+[I 2026-05-11 14:15:14,956] Trial 23 pruned. 
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+Model parameters: 232,563
+[I 2026-05-11 14:15:26,243] Trial 24 finished with value: 0.09306847661271452 and parameters: {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.15777990569558664, 'lookback_len': 8, 'learning_rate': 0.0009859147372222982, 'weight_decay': 3.960431984923103e-05, 'batch_size': 32, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 232,563
+Model parameters: 232,563
+[I 2026-05-11 14:15:33,109] Trial 25 pruned. 
+Model parameters: 900,979
+Model parameters: 900,979
+Model parameters: 900,979
+Model parameters: 900,979
+[I 2026-05-11 14:15:50,395] Trial 26 finished with value: 0.07440375761554872 and parameters: {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.31238386260313533, 'lookback_len': 24, 'learning_rate': 0.00022562299319212054, 'weight_decay': 0.00013262418663697123, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 232,819
+Model parameters: 232,819
+Model parameters: 232,819
+Model parameters: 232,819
+[I 2026-05-11 14:17:02,849] Trial 27 finished with value: 0.08499280168508495 and parameters: {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.12832025886888504, 'lookback_len': 12, 'learning_rate': 0.002384592796843505, 'weight_decay': 0.0031096421414492014, 'batch_size': 16, 'warmup_epochs': 5}. Best is trial 14 with value: 0.14887450385401546.
+Model parameters: 62,195
+Model parameters: 62,195
+[I 2026-05-11 14:17:07,415] Trial 28 pruned. 
+Model parameters: 899,443
+Model parameters: 899,443
+[I 2026-05-11 14:17:15,729] Trial 29 pruned. 
+
+======================================================================
+Tuning finished in 446s
+======================================================================
+Best trial: #14
+Best mean val rank_corr: 0.1489
+Best params:
+  d_model: 128
+  n_heads: 8
+  lstm_layers: 3
+  dropout: 0.20794436172851677
+  lookback_len: 24
+  learning_rate: 0.0017982094450136338
+  weight_decay: 0.00257913314066865
+  batch_size: 16
+  warmup_epochs: 5
+
+Top 10 trials:
+  #14: rank_corr=0.1489  {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.20794436172851677, 'lookback_len': 24, 'learning_rate': 0.0017982094450136338, 'weight_decay': 0.00257913314066865, 'batch_size': 16, 'warmup_epochs': 5}
+  #21: rank_corr=0.1139  {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.15450803479732803, 'lookback_len': 8, 'learning_rate': 0.002848371505178922, 'weight_decay': 4.143030772783375e-05, 'batch_size': 32, 'warmup_epochs': 5}
+  #17: rank_corr=0.1079  {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.20120268387224885, 'lookback_len': 8, 'learning_rate': 0.0011128995604229386, 'weight_decay': 0.00021423016092887094, 'batch_size': 16, 'warmup_epochs': 5}
+  #19: rank_corr=0.1051  {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.1634387096612511, 'lookback_len': 8, 'learning_rate': 0.002765541370542151, 'weight_decay': 5.563415898894552e-05, 'batch_size': 32, 'warmup_epochs': 5}
+  #16: rank_corr=0.1035  {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.19431313469330028, 'lookback_len': 8, 'learning_rate': 0.0011646750951980393, 'weight_decay': 0.00028908238983188056, 'batch_size': 16, 'warmup_epochs': 5}
+  #15: rank_corr=0.0972  {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.18978973609190988, 'lookback_len': 8, 'learning_rate': 0.0014510712144860393, 'weight_decay': 0.003153819241586393, 'batch_size': 16, 'warmup_epochs': 5}
+  #11: rank_corr=0.0941  {'d_model': 128, 'n_heads': 8, 'lstm_layers': 1, 'dropout': 0.3774520178711339, 'lookback_len': 24, 'learning_rate': 0.007456991301085365, 'weight_decay': 0.005529403787417128, 'batch_size': 16, 'warmup_epochs': 5}
+  #24: rank_corr=0.0931  {'d_model': 64, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.15777990569558664, 'lookback_len': 8, 'learning_rate': 0.0009859147372222982, 'weight_decay': 3.960431984923103e-05, 'batch_size': 32, 'warmup_epochs': 5}
+  #20: rank_corr=0.0930  {'d_model': 128, 'n_heads': 8, 'lstm_layers': 3, 'dropout': 0.22502092857087494, 'lookback_len': 8, 'learning_rate': 0.000830859741080672, 'weight_decay': 0.00016120047632684907, 'batch_size': 16, 'warmup_epochs': 10}
+  #8: rank_corr=0.0906  {'d_model': 128, 'n_heads': 2, 'lstm_layers': 3, 'dropout': 0.2532405829093072, 'lookback_len': 24, 'learning_rate': 0.004584154780136381, 'weight_decay': 0.0013167465326936148, 'batch_size': 16, 'warmup_epochs': 0}
+
+Saved best params to results/best_params.json

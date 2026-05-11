@@ -3,7 +3,10 @@ Optuna hyperparameter tuning for sector rotation.
 
 Search space covers TFT architecture + AdamW optimization. Each trial fits
 the model on the last N walk-forward folds (val-only — test slices are
-untouched to prevent leakage) and returns the mean val rank correlation.
+untouched to prevent leakage). Within each fold the best epoch and early
+stopping are driven by val rank correlation (not MSE), and the trial's
+objective is the mean val rank correlation across folds — so the entire
+optimization signal is the ranking metric we actually care about.
 
 Usage:
     python tune.py                              # 30 trials, last 4 folds
@@ -124,6 +127,7 @@ def make_objective(cfg: Config, features, relative_returns, n_sectors,
                     epochs=epochs_per_fold, patience=patience,
                     seed=base_seed + fold_idx * 31,
                     fold_idx=fold_idx,
+                    select_by="rank_corr",
                 )
             except ValueError as e:
                 # e.g. dataset too short for sampled lookback

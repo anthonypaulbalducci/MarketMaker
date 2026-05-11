@@ -94,12 +94,14 @@ def load_and_split_data(cfg: Config) -> dict:
 
     print(f"Samples — Train: {len(train_ds)}  Val: {len(val_ds)}  Test: {len(test_ds)}")
 
+    # num_workers=0: dataset is tiny (hundreds of weeks) so worker startup
+    # dominates; on macOS the fork-mode workers also deadlock with MPS/PyTorch.
     train_loader = DataLoader(train_ds, batch_size=cfg.train.batch_size,
-                              shuffle=True, num_workers=2, pin_memory=True, drop_last=True)
+                              shuffle=True, num_workers=0, drop_last=True)
     val_loader = DataLoader(val_ds, batch_size=cfg.train.batch_size,
-                            shuffle=False, num_workers=2, pin_memory=True)
+                            shuffle=False, num_workers=0)
     test_loader = DataLoader(test_ds, batch_size=cfg.train.batch_size,
-                             shuffle=False, num_workers=2, pin_memory=True)
+                             shuffle=False, num_workers=0)
 
     cfg.model.num_variates = N
     cfg.model.n_features = F

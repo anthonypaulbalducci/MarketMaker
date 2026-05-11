@@ -1,0 +1,20 @@
+{
+  "best_value": 0.14887450385401546,
+  "best_trial": 14,
+  "best_params": {
+    "d_model": 128,
+    "n_heads": 8,
+    "lstm_layers": 3,
+    "dropout": 0.20794436172851677,
+    "lookback_len": 24,
+    "learning_rate": 0.0017982094450136338,
+    "weight_decay": 0.00257913314066865,
+    "batch_size": 16,
+    "warmup_epochs": 5
+  },
+  "n_trials": 30,
+  "n_completed": 21,
+  "n_folds": 4,
+  "epochs_per_fold": 30,
+  "elapsed_sec": 445.7560131549835
+}
