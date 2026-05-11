@@ -2,7 +2,11 @@
 python run.py
 
 # 2. Initialize the paper trading portfolio
-python simulation.py setup --capital 10000
+# capital = initial investment
+# otm = desired distance from strike price
+# commissions = cost per trade
+
+python simulation.py setup --capital 3000 --otm 1.0 --commissions 0.65
 
 # 3. Get this week's picks
 python simulation.py predict
