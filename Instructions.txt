@@ -1,0 +1,19 @@
+# 1. Train the model (download + preprocess + train, ~15-30 min)
+python run.py
+
+# 2. Initialize the paper trading portfolio
+python simulation.py setup --capital 10000
+
+# 3. Get this week's picks
+python simulation.py predict
+
+# 4. Execute trades Monday morning
+python simulation.py execute
+
+# 5. Check positions anytime during the week
+python simulation.py status
+
+# 6. Next Friday: close, predict, execute Monday
+python simulation.py close
+python simulation.py predict
+python simulation.py execute
