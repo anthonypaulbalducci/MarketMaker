@@ -7,8 +7,13 @@ Key differences from black mamba:
 - Predicts relative returns for ALL sectors (not just SPY)
 - Strategy: long top sectors, short bottom sectors
 """
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+_MODEL_PARAM_KEYS = {"d_model", "n_heads", "lstm_layers", "dropout", "lookback_len"}
+_TRAIN_PARAM_KEYS = {"learning_rate", "weight_decay", "batch_size", "warmup_epochs"}
 
 
 @dataclass
@@ -93,6 +98,7 @@ class Config:
     features: FeaturesConfig = None
     model: ModelConfig = None
     train: TrainConfig = None
+    auto_load_best_params: bool = True
 
     def __post_init__(self):
         self.data = self.data or DataConfig()
@@ -104,3 +110,36 @@ class Config:
         self.data.processed_data_dir.mkdir(parents=True, exist_ok=True)
         self.train.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.train.results_dir.mkdir(parents=True, exist_ok=True)
+
+        if self.auto_load_best_params:
+            self.load_best_params()
+
+    def load_best_params(self, path: Path = None) -> bool:
+        """Apply tuned hyperparameters from a best_params.json if present.
+
+        Returns True if params were applied, False if the file was missing or
+        unreadable. Unknown keys are ignored so the file stays forward-compatible
+        with future search-space additions.
+        """
+        path = path or (self.train.results_dir / "best_params.json")
+        if not path.exists():
+            return False
+        try:
+            payload = json.loads(path.read_text())
+            params = payload.get("best_params", payload)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"[config] Ignoring {path}: {e}")
+            return False
+
+        applied = {}
+        for k, v in params.items():
+            if k in _MODEL_PARAM_KEYS:
+                setattr(self.model, k, v)
+                applied[k] = v
+            elif k in _TRAIN_PARAM_KEYS:
+                setattr(self.train, k, v)
+                applied[k] = v
+
+        if applied:
+            print(f"[config] Loaded tuned params from {path}: {applied}")
+        return bool(applied)

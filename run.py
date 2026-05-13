@@ -8,20 +8,8 @@ Usage:
     python run.py --tune             # Run Optuna tuning before training
 """
 import argparse
-import json
 
 from config import Config
-
-
-def _apply_best_params(cfg: Config, best_params: dict) -> None:
-    """Mirror tune.apply_params but in-place on cfg."""
-    model_keys = {"d_model", "n_heads", "lstm_layers", "dropout", "lookback_len"}
-    train_keys = {"learning_rate", "weight_decay", "batch_size", "warmup_epochs"}
-    for k, v in best_params.items():
-        if k in model_keys:
-            setattr(cfg.model, k, v)
-        elif k in train_keys:
-            setattr(cfg.train, k, v)
 
 
 def main():
@@ -65,11 +53,8 @@ def main():
         print("="*70)
         from tune import tune
         tune(cfg, n_trials=args.tune_trials, timeout=args.tune_timeout)
-
-        best_path = cfg.train.results_dir / "best_params.json"
-        best = json.loads(best_path.read_text())
-        print(f"\nApplying best params from {best_path}")
-        _apply_best_params(cfg, best["best_params"])
+        # cfg was built before tuning wrote best_params.json — re-apply now.
+        cfg.load_best_params()
 
     # Step 3: Train
     print("\n" + "="*70)
