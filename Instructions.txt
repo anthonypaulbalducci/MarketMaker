@@ -6,6 +6,7 @@ python run.py
 # otm = desired distance from strike price
 # commissions = cost per trade
 
+# A minimum of 3k initial investment is recommended to be able to cover the full range of projections
 python simulation.py setup --capital 3000 --otm 1.0 --commissions 0.65
 
 # 3. Get this week's picks
@@ -20,4 +21,4 @@ python simulation.py status
 # 6. Next Friday: close, predict, execute Monday
 python simulation.py close
 python simulation.py predict
-python simulation.py execute
+
