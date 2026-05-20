@@ -1,7 +1,0 @@
- {
-    "api_key": "YOUR_APP_KEY",
-    "app_secret": "YOUR_APP_SECRET",
-    "callback_url": "https://127.0.0.1",
-    "sandbox_account": "12345678",
-    "live_account": "87654321"
-  }
