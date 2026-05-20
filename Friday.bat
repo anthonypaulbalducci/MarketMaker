@@ -1,76 +1,76 @@
 @echo off
-REM Friday weekly rotation: close last week's positions, get new picks,
-REM execute new trades, show portfolio status, and publish to S3.
+REM ===================================================================
+REM   friday.bat - Weekly close/predict/execute/publish workflow
 REM
-REM Steps:
-REM   1. simulation.py close              - close all open option positions
-REM   2. simulation.py predict            - generate this week's sector picks
-REM   3. simulation.py execute            - buy options for the new picks
-REM   4. simulation.py status             - show resulting portfolio
-REM   5. plot_performance.py --upload     - render cumulative chart and
-REM      --upload-picks                     publish performance.png + picks.json
-REM                                         to s3://preceptron.com/
+REM   Run after markets close on Fridays (4pm ET or later).
+REM   Closes last week's positions, generates next week's picks,
+REM   opens new positions, and publishes results to the website.
 REM
-REM Per Instructions.txt the canonical schedule is close+predict on Friday and
-REM execute on Monday morning. This script bundles all three for a same-day
-REM rotation - comment out the execute step if you prefer to wait until Monday.
-REM
-REM S3 upload requires:
-REM   pip install boto3
-REM   AWS credentials configured (aws configure, or AWS_ACCESS_KEY_ID env vars)
+REM   Drop this file into the same folder as simulation.py.
+REM ===================================================================
 
 setlocal
 cd /d "%~dp0"
 
-if exist ".venv\Scripts\activate.bat" (
-    call ".venv\Scripts\activate.bat"
-) else (
-    echo [warn] .venv\Scripts\activate.bat not found - using system Python
-)
-
 echo.
-echo ====================================================================
-echo STEP 1/4: Close existing positions
-echo ====================================================================
+echo ====================================================
+echo   STEP 1/5: Close all positions for this week
+echo ====================================================
 python simulation.py close
-if errorlevel 1 goto :fail
+if errorlevel 1 goto error
 
 echo.
-echo ====================================================================
-echo STEP 2/4: Generate this week's picks
-echo ====================================================================
+echo ====================================================
+echo   STEP 2/5: Generate predictions for next week
+echo ====================================================
 python simulation.py predict
-if errorlevel 1 goto :fail
+if errorlevel 1 goto error
 
 echo.
-echo ====================================================================
-echo STEP 3/4: Execute new trades
-echo ====================================================================
+echo ====================================================
+echo   STEP 3/5: Execute new positions
+echo ====================================================
 python simulation.py execute
-if errorlevel 1 goto :fail
+if errorlevel 1 goto error
 
 echo.
-echo ====================================================================
-echo STEP 4/5: Portfolio status
-echo ====================================================================
-python simulation.py status
-if errorlevel 1 goto :fail
+echo ====================================================
+echo   STEP 4/5: Upload picks.json to S3
+echo ====================================================
+python generate_picks.py --s3
+if errorlevel 1 goto error
 
 echo.
-echo ====================================================================
-echo STEP 5/5: Publish chart and picks to S3
-echo ====================================================================
-python plot_performance.py --upload --upload-picks
-if errorlevel 1 goto :fail
+echo ====================================================
+echo   STEP 5/5: Upload performance chart to S3
+echo ====================================================
+python plot_performance.py --upload
+if errorlevel 1 goto error
 
 echo.
-echo [ok] Friday rotation complete.
+echo ====================================================
+echo   All steps completed successfully.
+echo ====================================================
+echo.
+echo   Hard-refresh https://preceptron.com/marketmaker.html
+echo   (Ctrl+Shift+R) to see the updated picks and chart.
+echo.
+echo   If the site does not update immediately, the CloudFront
+echo   edge cache may still be serving the old version. To force
+echo   an invalidation, run:
+echo.
+echo     aws cloudfront create-invalidation --distribution-id YOUR_DIST_ID --paths "/picks.json" "/performance.png"
+echo.
 pause
 exit /b 0
 
-:fail
-set EXITCODE=%ERRORLEVEL%
+:error
 echo.
-echo [error] Friday rotation failed at exit code %EXITCODE%
+echo ====================================================
+echo   !!! A STEP FAILED - SEE OUTPUT ABOVE !!!
+echo ====================================================
+echo   Stopping. Fix the error before running again, or re-run
+echo   the individual remaining steps manually.
+echo.
 pause
-exit /b %EXITCODE%
+exit /b 1

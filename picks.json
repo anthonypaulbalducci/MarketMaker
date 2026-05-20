@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-05-18T16:00:42",
+  "date": "2026-05-18",
+  "model": "TFT",
+  "longs": [
+    {
+      "ticker": "XLB",
+      "sector": "Materials",
+      "predicted_return": 0.022564
+    },
+    {
+      "ticker": "XLV",
+      "sector": "Health Care",
+      "predicted_return": 0.014326
+    },
+    {
+      "ticker": "XLRE",
+      "sector": "Real Estate",
+      "predicted_return": 0.012966
+    }
+  ],
+  "shorts": [
+    {
+      "ticker": "XLK",
+      "sector": "Technology",
+      "predicted_return": -0.025035
+    },
+    {
+      "ticker": "XLP",
+      "sector": "Consumer Staples",
+      "predicted_return": -0.019811
+    },
+    {
+      "ticker": "XLE",
+      "sector": "Energy",
+      "predicted_return": -0.010932
+    }
+  ],
+  "all_predictions": {
+    "XLB": 0.022564,
+    "XLC": -0.002037,
+    "XLE": -0.010932,
+    "XLF": 0.008842,
+    "XLI": 0.003343,
+    "XLK": -0.025035,
+    "XLP": -0.019811,
+    "XLRE": 0.012966,
+    "XLU": 0.007514,
+    "XLV": 0.014326,
+    "XLY": -0.001252
+  }
+}

@@ -21,13 +21,9 @@ Usage:
         Also uploads to s3://preceptron.com/performance.png so the
         website can embed it.
 
-    python plot_performance.py --upload-picks
-        Writes the latest weekly pick to picks.json and uploads to
-        s3://preceptron.com/picks.json.
-
 Requires:
     pip install matplotlib pandas yfinance
-    pip install boto3   # only if using --upload / --upload-picks
+    pip install boto3   # only if using --upload
 """
 import argparse
 import json
@@ -321,7 +317,7 @@ def plot_chart(portfolio, output_path):
 # Optional S3 upload
 # ----------------------------------------------------------------------
 
-def upload_to_s3(local_path, bucket, key, content_type="image/png"):
+def upload_to_s3(local_path, bucket, key):
     try:
         import boto3
         from botocore.exceptions import BotoCoreError, ClientError
@@ -334,7 +330,7 @@ def upload_to_s3(local_path, bucket, key, content_type="image/png"):
         s3.upload_file(
             str(local_path), bucket, key,
             ExtraArgs={
-                "ContentType": content_type,
+                "ContentType": "image/png",
                 "CacheControl": "no-cache, max-age=0",
             },
         )
@@ -345,74 +341,25 @@ def upload_to_s3(local_path, bucket, key, content_type="image/png"):
         return False
 
 
-def write_latest_picks(portfolio, output_path):
-    """Extract the most recent weekly pick into its own JSON file.
-
-    Excludes portfolio state (cash, positions, history) so this file is safe
-    to publish on a public bucket.
-    """
-    picks = portfolio.get("weekly_picks") or []
-    if not picks:
-        print("No weekly_picks in portfolio — nothing to upload.")
-        return False
-
-    latest = picks[-1]
-    try:
-        from tickers import get_sector_names
-        sector_names = get_sector_names()
-    except Exception:
-        sector_names = {}
-
-    payload = {
-        "date": latest.get("date"),
-        "longs": latest.get("longs", []),
-        "shorts": latest.get("shorts", []),
-        "predictions": latest.get("predictions", {}),
-        "executed": latest.get("executed", False),
-        "sector_names": sector_names,
-        "generated_at": datetime.now().isoformat(timespec="seconds"),
-    }
-    output_path.write_text(json.dumps(payload, indent=2))
-    print(f"Wrote {output_path.resolve()}")
-    return True
-
-
 def main():
     parser = argparse.ArgumentParser(description="Plot simulation performance vs SPY")
     parser.add_argument("--output", default="performance.png", help="Output PNG path")
-    parser.add_argument("--upload", action="store_true", help="Upload chart PNG to S3")
+    parser.add_argument("--upload", action="store_true", help="Upload to S3 after generating")
     parser.add_argument("--bucket", default="preceptron.com", help="S3 bucket")
-    parser.add_argument("--key", default="performance.png", help="S3 object key for chart")
-    parser.add_argument("--upload-picks", action="store_true",
-                        help="Also write latest picks to picks.json and upload to S3")
-    parser.add_argument("--picks-output", default="picks.json", help="Local picks JSON path")
-    parser.add_argument("--picks-key", default="picks.json", help="S3 object key for picks JSON")
-    parser.add_argument("--no-chart", action="store_true",
-                        help="Skip chart generation (useful with --upload-picks only)")
+    parser.add_argument("--key", default="performance.png", help="S3 object key")
     args = parser.parse_args()
 
     portfolio = load_portfolio()
     if portfolio is None:
         sys.exit(1)
 
-    exit_code = 0
+    output_path = Path(args.output)
+    plot_chart(portfolio, output_path)
 
-    if not args.no_chart:
-        output_path = Path(args.output)
-        plot_chart(portfolio, output_path)
-        if args.upload:
-            if not upload_to_s3(output_path, args.bucket, args.key, "image/png"):
-                exit_code = 2
-
-    if args.upload_picks:
-        picks_path = Path(args.picks_output)
-        if write_latest_picks(portfolio, picks_path):
-            if not upload_to_s3(picks_path, args.bucket, args.picks_key, "application/json"):
-                exit_code = 2
-        else:
-            exit_code = 3
-
-    sys.exit(exit_code)
+    if args.upload:
+        ok = upload_to_s3(output_path, args.bucket, args.key)
+        if not ok:
+            sys.exit(2)
 
 
 if __name__ == "__main__":

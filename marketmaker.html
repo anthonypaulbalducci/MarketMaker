@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="assets/img/favicon.ico" type="image/x-icon">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarketMaker&trade; - Preceptron.com</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: rgb(10, 14, 27);
+      color: white;
+      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* Hamburger nav - identical to homepage */
+    .hamburger {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 30px;
+      height: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    .hamburger div {
+      height: 4px;
+      background-color: white;
+      border-radius: 2px;
+    }
+    .menu {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      background-color: #1c1f2e;
+      border: 1px solid #333;
+      border-radius: 5px;
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+      min-width: 150px;
+    }
+    .menu a {
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+    }
+    .menu a:last-child { border-bottom: none; }
+    .menu a:hover { background-color: #2a2d40; }
+
+    /* Page wrapper - fades on nav click like homepage */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 20px 40px;
+      transition: opacity 1.5s ease;
+    }
+    .page.fade-out { opacity: 0; }
+
+    /* Hero with MarketMakerLogo2 */
+    .hero {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+    .hero img {
+      max-width: 70%;
+      max-height: 620px;
+    }
+    .meta {
+      margin-top: 14px;
+      color: #8b8fa3;
+      font-size: 0.8rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      text-align: center;
+      color: #b8bdd1;
+      font-size: 1rem;
+      margin: 0 auto 40px;
+      max-width: 620px;
+      line-height: 1.5;
+      padding: 0 10px;
+    }
+
+    /* Picks two-column layout */
+    .picks {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 720px) {
+      .picks { grid-template-columns: 1fr; gap: 20px; }
+      .page { padding: 60px 16px 30px; }
+      .hero img { max-width: 75%; }
+    }
+
+    .col-hdr {
+      font-size: 0.95rem;
+      font-weight: normal;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: white;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-long { background: #3ba776; }
+    .dot-short { background: #e25555; }
+
+    .col-sub {
+      color: #8b8fa3;
+      font-size: 0.78rem;
+      margin: 0 0 16px;
+      letter-spacing: 0.02em;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card {
+      background-color: #1c1f2e;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+    .card:hover {
+      background-color: #2a2d40;
+      transform: translateY(-1px);
+    }
+    .card-long:hover { border-color: #3ba776; }
+    .card-short:hover { border-color: #e25555; }
+
+    .card-body { min-width: 0; }
+    .card-ticker {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.45rem;
+      font-weight: bold;
+      letter-spacing: 0.02em;
+    }
+    .card-sector {
+      color: #b8bdd1;
+      font-size: 0.88rem;
+      margin-top: 3px;
+    }
+    .card-pred {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.2rem;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .card-long .card-pred { color: #3ba776; }
+    .card-short .card-pred { color: #e25555; }
+
+    /* Ranking table */
+    .ranking {
+      background-color: #1c1f2e;
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 22px 26px;
+      margin-bottom: 30px;
+    }
+    .ranking h2 {
+      font-size: 0.9rem;
+      font-weight: normal;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: white;
+      margin: 0 0 18px;
+    }
+    .ranking table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .ranking th {
+      text-align: left;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #8b8fa3;
+      font-weight: normal;
+      padding: 8px 12px;
+      border-bottom: 1px solid #333;
+    }
+    .ranking td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #2a2d40;
+      font-family: 'Courier New', monospace;
+      font-size: 0.92rem;
+    }
+    .ranking tr:last-child td { border-bottom: none; }
+    .ranking .rank { color: #8b8fa3; width: 50px; }
+    .ranking .tk { font-weight: bold; color: white; }
+    .ranking .sec { color: #b8bdd1; }
+    .ranking .pr { text-align: right; font-weight: bold; }
+    .ranking .pr.pos { color: #3ba776; }
+    .ranking .pr.neg { color: #e25555; }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b8fa3;
+      font-style: italic;
+    }
+
+    .ftr {
+      text-align: center;
+      color: #8b8fa3;
+      font-size: 0.78rem;
+      padding-top: 24px;
+      border-top: 1px solid #333;
+      margin-top: 30px;
+    }
+    .ftr p { margin: 0 0 6px; }
+    .disclaimer { font-size: 0.7rem; opacity: 0.75; }
+  </style>
+</head>
+<body>
+  <!-- Hamburger Icon -->
+  <div class="hamburger" onclick="toggleMenu()">
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+
+  <!-- Drop-down Menu -->
+  <div class="menu" id="dropdownMenu">
+    <a onclick="fadeNav('index.html')">Home</a>
+    <a onclick="fadeNav('marketmaker.html')">MarketMaker&trade;</a>
+    <a onclick="fadeNav('services.html')">Services</a>
+    <a onclick="fadeNav('https://github.com/anthonypaulbalducci/MarketResearch')">Research</a>
+    <a onclick="fadeNav('about.html')">About</a>
+    <a onclick="fadeNav('contact.html')">Contact</a>
+  </div>
+
+  <div class="page" id="page">
+    <div class="hero">
+      <img src="assets/img/MarketMakerLogo2.png" alt="MarketMaker" />
+      <div class="meta" id="meta">Loading&hellip;</div>
+    </div>
+
+    <p class="tagline">Weekly sector rotation positioning. Long the strongest sectors, short the weakest.</p>
+
+    <main id="content">
+      <div class="loading">Loading current week&rsquo;s picks&hellip;</div>
+    </main>
+
+    <footer class="ftr">
+      <p>Market-neutral &middot; long top-3 sectors, short bottom-3 sectors</p>
+      <p class="disclaimer">For educational and research purposes only. Not investment advice.</p>
+    </footer>
+  </div>
+
+  <script>
+    /* Nav - matching homepage behavior */
+    function toggleMenu() {
+      const menu = document.getElementById('dropdownMenu');
+      menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function fadeNav(page) {
+      const pageEl = document.getElementById('page');
+      pageEl.classList.add('fade-out');
+      document.getElementById('dropdownMenu').style.display = 'none';
+      setTimeout(() => { window.location.href = page; }, 1500);
+    }
+
+    window.addEventListener('click', function(e) {
+      const menu = document.getElementById('dropdownMenu');
+      const hamburger = document.querySelector('.hamburger');
+      if (!menu.contains(e.target) && !hamburger.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    /* Picks rendering */
+    const SECTOR_NAMES = {
+      XLB: 'Materials',
+      XLC: 'Communication Services',
+      XLE: 'Energy',
+      XLF: 'Financials',
+      XLI: 'Industrials',
+      XLK: 'Technology',
+      XLP: 'Consumer Staples',
+      XLRE: 'Real Estate',
+      XLU: 'Utilities',
+      XLV: 'Health Care',
+      XLY: 'Consumer Discretionary'
+    };
+
+    function fmtPct(x) {
+      const v = (Number(x) || 0) * 100;
+      const sign = v > 0 ? '+' : (v < 0 ? '' : '');
+      return sign + v.toFixed(2) + '%';
+    }
+
+    function fmtDate(s) {
+      if (!s) return '';
+      try {
+        const d = new Date(s + 'T00:00:00');
+        if (isNaN(d.getTime())) return s;
+        return d.toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      } catch (e) { return s; }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function pickCard(p, side) {
+      const ticker = escapeHtml(p.ticker || '');
+      const sector = escapeHtml(p.sector || SECTOR_NAMES[p.ticker] || '');
+      const pred = fmtPct(p.predicted_return);
+      return `
+        <article class="card card-${side}">
+          <div class="card-body">
+            <div class="card-ticker">${ticker}</div>
+            <div class="card-sector">${sector}</div>
+          </div>
+          <div class="card-pred">${pred}</div>
+        </article>
+      `;
+    }
+
+    function renderPicks(data) {
+      const meta = document.getElementById('meta');
+      meta.textContent = data.date ? 'Week of ' + fmtDate(data.date) : '';
+
+      const longs = Array.isArray(data.longs) ? data.longs : [];
+      const shorts = Array.isArray(data.shorts) ? data.shorts : [];
+      const longCards = longs.map(p => pickCard(p, 'long')).join('');
+      const shortCards = shorts.map(p => pickCard(p, 'short')).join('');
+
+      let rankingHtml = '';
+      const all = data.all_predictions;
+      if (all && typeof all === 'object') {
+        const sorted = Object.entries(all)
+          .map(([t, v]) => [t, Number(v) || 0])
+          .sort((a, b) => b[1] - a[1]);
+        const rows = sorted.map(([t, v], i) => `
+          <tr>
+            <td class="rank">${i + 1}</td>
+            <td class="tk">${escapeHtml(t)}</td>
+            <td class="sec">${escapeHtml(SECTOR_NAMES[t] || '')}</td>
+            <td class="pr ${v >= 0 ? 'pos' : 'neg'}">${fmtPct(v)}</td>
+          </tr>
+        `).join('');
+        rankingHtml = `
+          <section class="ranking">
+            <h2>Full sector ranking</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Rank</th><th>ETF</th><th>Sector</th><th style="text-align:right">Predicted</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </section>
+        `;
+      }
+
+      document.getElementById('content').innerHTML = `
+        <section class="picks">
+          <div>
+            <h2 class="col-hdr"><span class="dot dot-long"></span>Long positions</h2>
+            <p class="col-sub">Buy calls &middot; ~1 month to expiry</p>
+            <div class="cards">${longCards}</div>
+          </div>
+          <div>
+            <h2 class="col-hdr"><span class="dot dot-short"></span>Short positions</h2>
+            <p class="col-sub">Buy puts &middot; ~1 month to expiry</p>
+            <div class="cards">${shortCards}</div>
+          </div>
+        </section>
+        ${rankingHtml}
+      `;
+    }
+
+    async function loadPicks() {
+      try {
+        const r = await fetch('picks.json?' + Date.now());
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const data = await r.json();
+        renderPicks(data);
+      } catch (e) {
+        console.error('Failed to load picks:', e);
+        document.getElementById('meta').textContent = '';
+        document.getElementById('content').innerHTML =
+          '<div class="loading">Sector picks are being generated. Check back soon.</div>';
+      }
+    }
+
+    loadPicks();
+  </script>
+</body>
+</html>

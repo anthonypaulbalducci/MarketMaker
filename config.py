@@ -7,10 +7,8 @@ Key differences from black mamba:
 - Predicts relative returns for ALL sectors (not just SPY)
 - Strategy: long top sectors, short bottom sectors
 """
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -89,16 +87,6 @@ class TrainConfig:
     results_dir: Path = Path("results")
 
 
-# Default search locations for a tuned-hyperparameters JSON file.
-# Checked in order; the first existing file is used.
-DEFAULT_BEST_PARAMS_PATHS = [
-    "best_params.json",
-    "results/best_params.json",
-    "tuning/best_params.json",
-    "checkpoints/best_params.json",
-]
-
-
 @dataclass
 class Config:
     data: DataConfig = None
@@ -116,91 +104,3 @@ class Config:
         self.data.processed_data_dir.mkdir(parents=True, exist_ok=True)
         self.train.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         self.train.results_dir.mkdir(parents=True, exist_ok=True)
-
-    # ---------------------------------------------------------------
-    # Tuned-hyperparameter management
-    # ---------------------------------------------------------------
-
-    def load_best_params(self, path: Optional[str] = None) -> bool:
-        """
-        Load tuned hyperparameters from a JSON file (typically written by tune.py).
-
-        The file should be a flat dictionary mapping hyperparameter names to values,
-        matching Optuna's `study.best_params` format. Example:
-
-            {
-              "d_model": 128,
-              "n_heads": 8,
-              "lstm_layers": 3,
-              "dropout": 0.2,
-              "learning_rate": 0.0005
-            }
-
-        Args:
-            path: Explicit path to the JSON file. If None, searches the default
-                  locations defined in DEFAULT_BEST_PARAMS_PATHS.
-
-        Returns:
-            True if at least one parameter was loaded and applied; False otherwise.
-        """
-        candidates = [path] if path else DEFAULT_BEST_PARAMS_PATHS
-        loaded_from = None
-        for candidate in candidates:
-            if candidate and Path(candidate).exists():
-                loaded_from = Path(candidate)
-                break
-
-        if loaded_from is None:
-            tried = [c for c in candidates if c]
-            print(f"Warning: no tuned-params file found. Searched: {tried}")
-            print("         Keeping config.py defaults.")
-            return False
-
-        try:
-            params = json.loads(loaded_from.read_text())
-        except json.JSONDecodeError as e:
-            print(f"Warning: could not parse {loaded_from}: {e}")
-            print("         Keeping config.py defaults.")
-            return False
-
-        print(f"Loading tuned hyperparameters from {loaded_from}:")
-        applied = 0
-        for key, value in params.items():
-            matched = False
-            for section_name, section in (("model", self.model), ("train", self.train)):
-                if hasattr(section, key):
-                    old_value = getattr(section, key)
-                    setattr(section, key, value)
-                    print(f"  {section_name}.{key}: {old_value} -> {value}")
-                    matched = True
-                    applied += 1
-                    break
-            if not matched:
-                print(f"  Warning: '{key}' not found on model or train config; ignored.")
-
-        if applied == 0:
-            print("  (no recognized hyperparameters found in file)")
-            return False
-        return True
-
-    def save_best_params(self, path: str = "best_params.json") -> None:
-        """
-        Save the current tunable hyperparameters as a JSON file.
-
-        Useful for capturing values after a tune run, or for converting manual
-        config edits into a portable params file that load_best_params() can read.
-        """
-        tunable = {
-            # Architectural
-            "d_model": self.model.d_model,
-            "n_heads": self.model.n_heads,
-            "lstm_layers": self.model.lstm_layers,
-            "dropout": self.model.dropout,
-            "lookback_len": self.model.lookback_len,
-            # Training
-            "learning_rate": self.train.learning_rate,
-            "weight_decay": self.train.weight_decay,
-            "batch_size": self.train.batch_size,
-        }
-        Path(path).write_text(json.dumps(tunable, indent=2))
-        print(f"Saved {len(tunable)} hyperparameters to {path}")

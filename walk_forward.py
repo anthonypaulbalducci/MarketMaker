@@ -32,139 +32,6 @@ from train import (
 )
 
 
-def fit_one_fold(
-    cfg: Config,
-    train_feat: np.ndarray,
-    val_feat: np.ndarray,
-    test_feat,
-    train_tgt: np.ndarray,
-    val_tgt: np.ndarray,
-    test_tgt,
-    lookback: int,
-    device,
-    n_sectors: int,
-    spy_index: int,
-    epochs: int,
-    patience: int,
-    seed: int,
-    trial=None,
-    fold_idx: int = 0,
-    select_by: str = "loss",
-) -> dict:
-    """Train one fold and report metrics.
-
-    test_feat / test_tgt may be None during hyperparameter tuning, in which
-    case the test loader is skipped and only val metrics are returned.
-
-    select_by: "loss" picks the epoch with min val MSE (default, used by
-    walk-forward training). "rank_corr" picks the epoch with max val rank
-    correlation and uses it for early stopping — used by the tuner so the
-    Optuna objective reflects rank corr end-to-end.
-    """
-    if select_by not in ("loss", "rank_corr"):
-        raise ValueError(f"select_by must be 'loss' or 'rank_corr', got {select_by!r}")
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-
-    train_ds = SectorRotationDataset(train_feat, train_tgt, lookback)
-    val_ds = SectorRotationDataset(val_feat, val_tgt, lookback)
-
-    # num_workers=0: small in-memory dataset; on macOS DataLoader workers
-    # deadlock with MPS, and worker startup dominates wall time anyway.
-    train_ld = DataLoader(train_ds, batch_size=cfg.train.batch_size,
-                          shuffle=True, num_workers=0, drop_last=True)
-    val_ld = DataLoader(val_ds, batch_size=cfg.train.batch_size,
-                        shuffle=False, num_workers=0)
-
-    test_ld = None
-    if test_feat is not None and test_tgt is not None:
-        test_ds = SectorRotationDataset(test_feat, test_tgt, lookback)
-        test_ld = DataLoader(test_ds, batch_size=cfg.train.batch_size,
-                             shuffle=False, num_workers=0)
-
-    model = build_model(cfg, spy_index=spy_index, n_sectors=n_sectors)
-    model = model.to(device)
-
-    loss_fn = nn.MSELoss()
-    optimizer = torch.optim.AdamW(model.parameters(),
-                                   lr=cfg.train.learning_rate,
-                                   weight_decay=cfg.train.weight_decay)
-    total_steps = max(epochs * len(train_ld), 1)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=total_steps, eta_min=1e-6)
-    early_stopping = EarlyStopping(patience=patience)
-
-    best_val_loss = float("inf")
-    best_val_rank_corr = -float("inf")
-    best_state = None
-
-    for epoch in range(1, epochs + 1):
-        train_one_epoch(model, train_ld, optimizer, scheduler,
-                        loss_fn, device, cfg.train.max_grad_norm, 0)
-        val_m = evaluate(model, val_ld, loss_fn, device)
-
-        if select_by == "rank_corr":
-            improved = val_m["rank_corr"] > best_val_rank_corr
-            # EarlyStopping minimizes — feed it negative rank_corr so a rising
-            # rank corr counts as improvement.
-            es_signal = -val_m["rank_corr"]
-        else:
-            improved = val_m["loss"] < best_val_loss
-            es_signal = val_m["loss"]
-
-        if improved:
-            best_val_loss = val_m["loss"]
-            best_val_rank_corr = val_m["rank_corr"]
-            best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
-
-        if early_stopping(es_signal):
-            break
-
-    if best_state is not None:
-        model.load_state_dict(best_state)
-    model = model.to(device)
-
-    out = {
-        "best_val_loss": float(best_val_loss),
-        "best_val_rank_corr": float(best_val_rank_corr),
-        "predictions": None,
-        "targets": None,
-        "test_rank_corr": None,
-        "test_top3_accuracy": None,
-    }
-
-    if test_ld is not None:
-        test_m = evaluate(model, test_ld, loss_fn, device)
-        out["predictions"] = test_m["predictions"]
-        out["targets"] = test_m["targets"]
-        out["test_rank_corr"] = float(test_m["rank_corr"])
-        out["test_top3_accuracy"] = float(test_m["top3_accuracy"])
-
-    return out
-
-
-def _normalize_fold(features, t_s, t_e, v_s, v_e, te_s, te_e):
-    """Z-score using the fold's training stats. te_s/te_e may equal v_e (no test slice)."""
-    train_feat = features[t_s:t_e].copy()
-    val_feat = features[v_s:v_e].copy()
-    test_feat = features[te_s:te_e].copy() if te_e > te_s else None
-
-    mean = train_feat.mean(axis=0)
-    std = train_feat.std(axis=0)
-    std[std < 1e-8] = 1.0
-
-    train_feat = (train_feat - mean) / std
-    val_feat = (val_feat - mean) / std
-    if test_feat is not None:
-        test_feat = (test_feat - mean) / std
-
-    arrays = [train_feat, val_feat] + ([test_feat] if test_feat is not None else [])
-    for arr in arrays:
-        np.nan_to_num(arr, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
-
-    return train_feat, val_feat, test_feat
-
-
 def walk_forward(
     cfg: Config,
     train_weeks: int = 400,
@@ -231,36 +98,83 @@ def walk_forward(
               f"Train: {dates[t_s]}–{dates[t_e-1]}  "
               f"Test: {dates[te_s]}–{dates[te_e-1]}")
 
-        train_feat, val_feat, test_feat = _normalize_fold(
-            features, t_s, t_e, v_s, v_e, te_s, te_e)
+        # Normalize using this fold's training stats
+        train_feat = features[t_s:t_e].copy()
+        val_feat = features[v_s:v_e].copy()
+        test_feat = features[te_s:te_e].copy()
+
+        mean = train_feat.mean(axis=0)
+        std = train_feat.std(axis=0)
+        std[std < 1e-8] = 1.0
+
+        train_feat = (train_feat - mean) / std
+        val_feat = (val_feat - mean) / std
+        test_feat = (test_feat - mean) / std
+
+        for arr in [train_feat, val_feat, test_feat]:
+            np.nan_to_num(arr, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
 
         train_tgt = relative_returns[t_s:t_e]
         val_tgt = relative_returns[v_s:v_e]
         test_tgt = relative_returns[te_s:te_e]
 
+        train_ds = SectorRotationDataset(train_feat, train_tgt, lookback)
+        val_ds = SectorRotationDataset(val_feat, val_tgt, lookback)
+        test_ds = SectorRotationDataset(test_feat, test_tgt, lookback)
+
+        train_ld = DataLoader(train_ds, batch_size=cfg.train.batch_size,
+                              shuffle=True, num_workers=2, pin_memory=True, drop_last=True)
+        val_ld = DataLoader(val_ds, batch_size=cfg.train.batch_size,
+                            shuffle=False, num_workers=2, pin_memory=True)
+        test_ld = DataLoader(test_ds, batch_size=cfg.train.batch_size,
+                             shuffle=False, num_workers=2, pin_memory=True)
+
         # Multi-seed for this fold
         fold_preds = []
-        fold_target = None
         t0 = time.time()
 
         for seed_idx in range(n_seeds):
             seed = cfg.train.seed + seed_idx * 137 + fold_idx * 31
+            torch.manual_seed(seed)
+            np.random.seed(seed)
 
-            fold_out = fit_one_fold(
-                cfg=cfg,
-                train_feat=train_feat, val_feat=val_feat, test_feat=test_feat,
-                train_tgt=train_tgt, val_tgt=val_tgt, test_tgt=test_tgt,
-                lookback=lookback, device=device,
-                n_sectors=n_sectors, spy_index=spy_index,
-                epochs=epochs_per_fold, patience=patience, seed=seed,
-                fold_idx=fold_idx,
-            )
-            fold_preds.append(fold_out["predictions"])
-            fold_target = fold_out["targets"]
+            model = build_model(cfg, spy_index=spy_index, n_sectors=n_sectors)
+            model = model.to(device)
+
+            loss_fn = nn.MSELoss()
+            optimizer = torch.optim.AdamW(model.parameters(),
+                                           lr=cfg.train.learning_rate,
+                                           weight_decay=cfg.train.weight_decay)
+            total_steps = epochs_per_fold * len(train_ld)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=total_steps, eta_min=1e-6)
+            early_stopping = EarlyStopping(patience=patience)
+
+            best_val_loss = float("inf")
+            best_state = None
+
+            for epoch in range(1, epochs_per_fold + 1):
+                train_m = train_one_epoch(model, train_ld, optimizer, scheduler,
+                                          loss_fn, device, cfg.train.max_grad_norm, 0)
+                val_m = evaluate(model, val_ld, loss_fn, device)
+
+                if val_m["loss"] < best_val_loss:
+                    best_val_loss = val_m["loss"]
+                    best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+
+                if early_stopping(val_m["loss"]):
+                    break
+
+            if best_state is not None:
+                model.load_state_dict(best_state)
+            model = model.to(device)
+
+            test_m = evaluate(model, test_ld, loss_fn, device)
+            fold_preds.append(test_m["predictions"])
 
             if n_seeds > 1:
-                print(f"    Seed {seed_idx+1}: RankCorr={fold_out['test_rank_corr']:.4f} "
-                      f"Top3={fold_out['test_top3_accuracy']:.4f}")
+                print(f"    Seed {seed_idx+1}: RankCorr={test_m['rank_corr']:.4f} "
+                      f"Top3={test_m['top3_accuracy']:.4f}")
 
         fold_time = time.time() - t0
 
@@ -269,6 +183,8 @@ def walk_forward(
             fold_pred = np.mean(fold_preds, axis=0)
         else:
             fold_pred = fold_preds[0]
+
+        fold_target = test_m["targets"]
 
         # Compute fold metrics on averaged predictions
         n_long, n_short = 3, 3
